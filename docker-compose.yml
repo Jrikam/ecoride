@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: ecoride_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ecoride
+      MYSQL_ROOT_PASSWORD: rootpass
+      # Créer un utilisateur standard
+      MYSQL_USER: ecoride_user
+      MYSQL_PASSWORD: ecoride_pass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - ecoride_net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ecoride_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - ecoride_net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecoride_app
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_DATABASE: ecoride
+      DB_USERNAME: ecoride_user
+      DB_PASSWORD: ecoride_pass
+    volumes:
+      - ./src/:/var/www/html
+    ports:
+      - "8080:80"
+    
+    depends_on:
+      - db
+    networks:
+      - ecoride_net
+
+networks:
+  ecoride_net:
+
+volumes:
+  db_data:

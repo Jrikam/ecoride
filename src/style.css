@@ -1,0 +1,92 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f9f6;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Header */
+header {
+  background-color: #adaf4c;
+  color: white;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.logo {
+  width: 100px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+/* Contenu principal */
+main {
+  padding: 30px;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* Section présentation */
+.presentation {
+  background-color: #e0f2f1;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+
+.presentation h2 {
+  margin-top: 0;
+}
+
+.illustration {
+  display: block;
+  max-width: 100%;
+  margin: 20px auto;
+  border-radius: 10px;
+}
+
+/* Formulaire */
+.formulaire {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.formulaire h3 {
+  margin-top: 0;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+input[type="submit"] {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: #8e385c;
+}
+
+/* Footer */
+footer {
+  background-color: #4CAF50;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+}
