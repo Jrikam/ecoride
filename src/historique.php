@@ -2,7 +2,7 @@
 session_start();
 require_once 'pdo.php';
 
-$role = $_SESSION['role'] ?? null;  // ← Ici, récupère le rôle
+$role = $_SESSION['role'] ?? null;
 
 if (!isset($_SESSION['id'])) {
     header('Location: login.php');
@@ -10,7 +10,6 @@ if (!isset($_SESSION['id'])) {
 }
 
 $userId = $_SESSION['id'];
-$role = $_SESSION['role'] ?? null; // AJOUTÉ ICI : récupération du rôle depuis la session
 
 // Trajets en tant que chauffeur
 $stmt1 = $pdo->prepare("
@@ -24,17 +23,14 @@ $trajets_chauffeur = $stmt1->fetchAll(PDO::FETCH_ASSOC);
 
 // Trajets en tant que passager
 $stmt2 = $pdo->prepare("
-    SELECT t.*
+    SELECT t.*, p.utilisateur_id AS passager_id
     FROM trajets t
-    JOIN participations p ON t.id = p.covoiturage_id
-    WHERE p.utilisateur_id = ?
+    LEFT JOIN participations p ON t.id = p.covoiturage_id AND p.utilisateur_id = ?
+    WHERE p.utilisateur_id IS NOT NULL
     ORDER BY t.date_trajet DESC
 ");
 $stmt2->execute([$userId]);
 $trajets_passager = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-?>
-<?php
-$trajet_demarre_id = $_GET['demarre'] ?? null;
 ?>
 
 
@@ -45,13 +41,12 @@ $trajet_demarre_id = $_GET['demarre'] ?? null;
   <title>Historique</title>
 </head>
 <body>
-  <p>Rôle actuel : <?= htmlspecialchars($role) ?></p> <!-- ✅ AJOUT ICI -->
-  
+  <p>Rôle actuel : <?= htmlspecialchars($role) ?></p>
 
 <nav>
   <a href="ajouter_trajet.php">Ajouter un trajet</a> |
   <a href="historique.php">Historique</a> |
-  
+
   <?php if ($role === 'employe'): ?>
     <a href="employe.php">Espace Employé</a> |
   <?php endif; ?>
@@ -74,29 +69,32 @@ $trajet_demarre_id = $_GET['demarre'] ?? null;
       <?= htmlspecialchars($trajet['depart']) ?> → <?= htmlspecialchars($trajet['arrivee']) ?> | 
       <?= htmlspecialchars($trajet['date_trajet']) ?>
 
-      <?php if (isset($trajet['etat'])): ?>
-    <?php if ($trajet['etat'] === 'en_attente'): ?>
+      <?php 
+      $etat = $trajet['etat'] ?? null;
+
+      if ($etat === 'en_attente'): ?>
         <form method="POST" action="demarrer_trajet.php" style="display:inline;">
-            <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-            <button type="submit">Démarrer</button>
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">Démarrer</button>
         </form>
-    <?php elseif ($trajet['etat'] === 'en_cours'): ?>
-        <form method="POST" action="terminer_trajet.php" style="display:inline;" target="_top">
-            <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-            <button type="submit">✅ Arrivée à destination</button>
+      <?php elseif ($etat === 'en_cours'): ?>
+        <form method="POST" action="terminer_trajet.php" style="display:inline;">
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">✅ Arrivée à destination</button>
         </form>
-    <?php endif; ?>
+      <?php elseif ($etat === 'termine'): ?>
+        <strong>Trajet terminé</strong>
+      <?php else: ?>
+        <em>État inconnu</em>
+      <?php endif; ?>
 
-          <?php else: ?>
-              <strong>Trajet terminé</strong>
-          <?php endif; ?>
-  
-
-      <form method="POST" action="annuler.php" style="display:inline;">
-        <input type="hidden" name="type" value="chauffeur">
-        <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-        <button type="submit">Annuler</button>
-      </form>
+      <?php if ($etat !== 'termine'): ?>
+        <form method="POST" action="annuler.php" style="display:inline;">
+          <input type="hidden" name="type" value="chauffeur">
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">Annuler</button>
+        </form>
+      <?php endif; ?>
     </div>
   <?php endforeach; ?>
 <?php endif; ?>
@@ -110,27 +108,32 @@ $trajet_demarre_id = $_GET['demarre'] ?? null;
       <?= htmlspecialchars($trajet['depart']) ?> → <?= htmlspecialchars($trajet['arrivee']) ?> | 
       <?= htmlspecialchars($trajet['date_trajet']) ?>
 
-      <?php if (isset($trajet['etat'])): ?>
-          <?php if ($trajet['etat'] === 'en_attente'): ?>
-              <form method="POST" action="demarrer_trajet.php" style="display:inline;">
-                <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-                <button type="submit">Démarrer</button>
-              </form>
-          <?php elseif ($trajet['etat'] === 'en_cours'): ?>
-              <form method="POST" action="terminer_trajet.php" style="display:inline;">
-                <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-                <button type="submit">Arrivée à destination</button>
-              </form>
-          <?php else: ?>
-              <strong>Trajet terminé</strong>
-          <?php endif; ?>
+      <?php 
+      $etat = $trajet['etat'] ?? null;
+
+      if ($etat === 'en_attente'): ?>
+        <form method="POST" action="demarrer_trajet.php" style="display:inline;">
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">Démarrer</button>
+        </form>
+      <?php elseif ($etat === 'en_cours'): ?>
+        <form method="POST" action="terminer_trajet.php" style="display:inline;">
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">Arrivée à destination</button>
+        </form>
+      <?php elseif ($etat === 'termine'): ?>
+        <strong>Trajet terminé</strong>
+      <?php else: ?>
+        <em>État inconnu</em>
       <?php endif; ?>
 
-      <form method="POST" action="annuler.php" style="display:inline;">
-        <input type="hidden" name="type" value="passager">
-        <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
-        <button type="submit">Se désister</button>
-      </form>
+      <?php if ($etat !== 'termine'): ?>
+        <form method="POST" action="annuler.php" style="display:inline;">
+          <input type="hidden" name="type" value="passager">
+          <input type="hidden" name="covoiturage_id" value="<?= $trajet['id'] ?>">
+          <button type="submit">Se désister</button>
+        </form>
+      <?php endif; ?>
     </div>
   <?php endforeach; ?>
 <?php endif; ?>

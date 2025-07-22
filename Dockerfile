@@ -9,5 +9,6 @@ RUN a2enmod rewrite
 # Copie les réglages personnalisés
 COPY php.ini /usr/local/etc/php/
 COPY apache/000-default.conf /etc/apache2/sites-available/000-default.conf
-# Change le répertoire par défaut si nécessaire
+
+# Change le répertoire de travail par défaut
 WORKDIR /var/www/html

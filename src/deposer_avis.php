@@ -13,33 +13,49 @@ $userId = $_SESSION['id'];
 // On récupère le covoiturage_id soit par GET, soit par POST
 $covoiturage_id = $_POST['covoiturage_id'] ?? ($_GET['covoiturage_id'] ?? null);
 
-// Si aucun trajet n’est fourni, on affiche un formulaire de sélection
+$error = '';
+$conducteur_id = null; // initialisation
+
+if ($covoiturage_id) {
+    // Récupérer le conducteur du trajet sélectionné pour éviter erreur NULL
+    $stmtConducteur = $pdo->prepare("SELECT utilisateur_id FROM trajets WHERE id = ?");
+    $stmtConducteur->execute([$covoiturage_id]);
+    $conducteur = $stmtConducteur->fetch();
+
+    if ($conducteur) {
+        $conducteur_id = $conducteur['utilisateur_id'];
+    } else {
+        $error = "Trajet introuvable.";
+    }
+}
+
+// Si aucun trajet n’est fourni et que ce n'est pas un POST (donc première étape), afficher la sélection
 if (!$covoiturage_id && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     // On récupère les trajets auxquels l'utilisateur a participé
-    $stmt = $pdo->prepare("
-        SELECT t.id, t.depart, t.arrivee, t.date_trajet
-        FROM trajets t
-        JOIN participations p ON t.id = p.covoiturage_id
-        WHERE p.utilisateur_id = ?
-        ORDER BY t.date_trajet DESC
-    ");
-    $stmt->execute([$userId]);
-    $trajets = $stmt->fetchAll();
+   $stmt = $pdo->prepare("
+    SELECT t.id, t.depart, t.arrivee, t.date_trajet
+    FROM trajets t
+    INNER JOIN reservations r ON r.trajet_id = t.id
+    WHERE r.utilisateur_id = :id_utilisateur AND r.avis_depose = 0
+");
+
+
+$stmt->execute(['id_utilisateur' => $_SESSION['id']]);
+$trajetsSansAvis = $stmt->fetchAll();
 }
-$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $note = isset($_POST['note']) ? (int)$_POST['note'] : null;
     $commentaire = $_POST['commentaire'] ?? '';
 
-    if ($covoiturage_id && $note >= 1 && $note <= 5) {
-        $stmt = $pdo->prepare("INSERT INTO avis (covoiturage_id, utilisateur_id, note, commentaire) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$covoiturage_id, $userId, $note, $commentaire]);
+    if ($covoiturage_id && $note >= 1 && $note <= 5 && $conducteur_id) {
+        $stmt = $pdo->prepare("INSERT INTO avis (covoiturage_id, utilisateur_id, conducteur_id, note, commentaire) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$covoiturage_id, $userId, $conducteur_id, $note, $commentaire]);
         $_SESSION['message'] = "Avis envoyé et en attente de validation.";
         header('Location: historique.php');
         exit;
     } else {
-        $error = "Note invalide ou covoiturage manquant.";
+        $error = "Note invalide ou covoiturage/conducteur manquant.";
     }
 }
 ?>
@@ -57,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p style="color:red;"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
 
-    <?php if (!$covoiturage_id && !empty($trajets)): ?>
+    <?php if (!$covoiturage_id && !empty($trajetsSansAvis)): ?>
         <form method="GET" action="deposer_avis.php">
             <label for="covoiturage_id">Sélectionner un trajet :</label>
             <select name="covoiturage_id" id="covoiturage_id" required>
-                <?php foreach ($trajets as $t): ?>
+                <?php foreach ($trajetsSansAvis as $t): ?>
                     <option value="<?= $t['id'] ?>">
                         <?= htmlspecialchars($t['depart']) ?> → <?= htmlspecialchars($t['arrivee']) ?> (<?= $t['date_trajet'] ?>)
                     </option>
@@ -73,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php elseif ($covoiturage_id): ?>
         <form method="POST">
             <input type="hidden" name="covoiturage_id" value="<?= (int)$covoiturage_id ?>">
+            <input type="hidden" name="conducteur_id" value="<?= (int)$conducteur_id ?>">
 
             <label for="note">Note (1 à 5) :</label>
             <select name="note" id="note" required>

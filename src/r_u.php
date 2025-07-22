@@ -1,11 +1,11 @@
 <?php
 session_start();
+
 // Déblocage rapide : si on passe ?admin=1 dans l'URL, on force la session Admin
 if (isset($_GET['admin']) && $_GET['admin'] == '1') {
-    $_SESSION['id']    = 6;                     // Remplace par l'ID de ton admin
+    $_SESSION['id']    = 6;
     $_SESSION['role']  = 'administrateur';
     $_SESSION['email'] = 'monadmin@test.com';
-    // facultatif : $_SESSION['credit'] = 100;
 }
 
 require_once 'pdo.php';
@@ -25,8 +25,8 @@ if (!$user || $user['role'] !== 'administrateur') {
     die("Accès refusé.");
 }
 
-// 1. Total crédits gagnés
-$stmtTotal = $pdo->query("SELECT SUM(credit) AS total_credits FROM trajets");
+// 1. Total crédits gagnés (via prix_net)
+$stmtTotal = $pdo->query("SELECT SUM(prix_net) AS total_credits FROM trajets");
 $totalCredits = $stmtTotal->fetchColumn() ?? 0;
 
 // 2. Nombre de covoiturages par jour
@@ -38,9 +38,9 @@ $stmtCovoit = $pdo->query("
 ");
 $covoitData = $stmtCovoit->fetchAll(PDO::FETCH_ASSOC);
 
-// 3. Crédits gagnés par jour (supposons que les crédits sont liés à trajets)
+// 3. Crédits gagnés par jour (via prix_net)
 $stmtCredits = $pdo->query("
-    SELECT DATE(date_trajet) AS jour, SUM(credit) AS total_credits
+    SELECT DATE(date_trajet) AS jour, SUM(prix_net) AS total_credits
     FROM trajets
     GROUP BY jour
     ORDER BY jour ASC
@@ -51,22 +51,22 @@ $creditsData = $stmtCredits->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<title>Espace Admin - Statistiques</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  h1, h2 { color: #333; }
-  .stats { margin-bottom: 40px; }
-  canvas { max-width: 700px; margin-bottom: 40px; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Espace Admin - Statistiques</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { color: #333; }
+    .stats { margin-bottom: 40px; }
+    canvas { max-width: 700px; margin-bottom: 40px; }
+  </style>
 </head>
 <body>
 
 <h1>Espace Administrateur</h1>
 
 <div class="stats">
-  <h2>Total des crédits gagnés par la plateforme : <?= number_format($totalCredits, 0, ',', ' ') ?></h2>
+  <h2>Total des crédits gagnés par la plateforme : <?= number_format($totalCredits, 2, ',', ' ') ?> €</h2>
 </div>
 
 <div>
@@ -115,7 +115,7 @@ $creditsData = $stmtCredits->fetchAll(PDO::FETCH_ASSOC);
     data: {
       labels: creditsLabels,
       datasets: [{
-        label: 'Crédits gagnés',
+        label: 'Crédits gagnés (€)',
         data: creditsTotals,
         backgroundColor: 'green'
       }]

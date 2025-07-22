@@ -12,23 +12,25 @@ try {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-$utilisateur_id = 1;
-$depart = trim($_POST['depart']);
-$arrivee = trim($_POST['arrivee']);
-$date_depart = $_POST['date_depart'];
-$date_arrive = isset($_POST['date_arrivee']) ? $_POST['date_arrivee'] : null;
-$prix= $_POST['prix'];  
-$places_disponibles = $_POST['places'];
-$type_vehicule = trim($_POST['type_vehicule']);
-$est_ecologique = isset($_POST['ecologique']) ? 1 : 0;
+    $utilisateur_id = 1;
+    $depart = trim($_POST['depart'] ?? '');
+    $arrivee = trim($_POST['arrivee'] ?? '');
+    $date_depart = $_POST['date_depart'] ?? '';
+    $date_arrive = $_POST['date_arrive'] ?? '';
+    $prix= $_POST['prix'] ?? '';  
+    $places_disponibles = $_POST['places'] ?? '';
+    $type_vehicule = trim($_POST['type_vehicule'] ?? '');
+    $est_ecologique = isset($_POST['ecologique']) ? 1 : 0;
 
+    // Vérification simplifiée et fiable
     if (
-        empty($depart) || empty($arrivee) || empty($date_depart) ||
-        empty($date_arrive) || empty($prix) || empty($places_disponibles) || empty($type_vehicule)
+        $depart === '' || $arrivee === '' || $date_depart === '' ||
+        $date_arrive === '' || $prix === '' || $places_disponibles === '' || $type_vehicule === ''
     ) {
         die('Tous les champs obligatoires doivent être remplis.');
     }
 
+    // Validation dates
     $date_depart_obj = DateTime::createFromFormat('Y-m-d\TH:i', $date_depart);
     $date_arrive_obj = DateTime::createFromFormat('Y-m-d\TH:i', $date_arrive);
     if (!$date_depart_obj || !$date_arrive_obj) {
@@ -38,6 +40,7 @@ $est_ecologique = isset($_POST['ecologique']) ? 1 : 0;
     $date_depart_sql = $date_depart_obj->format('Y-m-d H:i:s');
     $date_arrive_sql = $date_arrive_obj->format('Y-m-d H:i:s');
 
+    // Le reste identique...
     try {
         $sql = "INSERT INTO covoiturages (utilisateur_id, lieu_depart, lieu_arrivee, date_depart, date_arrive, prix, places_disponibles, type_vehicule, est_ecologique)
                 VALUES (:utilisateur_id, :lieu_depart, :lieu_arrivee, :date_depart, :date_arrive, :prix, :places_disponibles, :type_vehicule, :est_ecologique)";
@@ -66,14 +69,14 @@ $est_ecologique = isset($_POST['ecologique']) ? 1 : 0;
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>EcoRide - Covoiturage Écologique</title>
+    <title>EcoRide - Covoiturage Écologique</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <img src="src/image/ecoride-high-resolution-logo.png" alt="Logo EcoRide" class="logo">
-  <h1>Bienvenue sur Eco Ride</h1>
+    <img src="src/image/ecoridelogo.png" alt="Logo Covoiturage" class="Logo">
+    <h1>Bienvenue sur Eco Ride</h1>
 </header>
 
 <main>

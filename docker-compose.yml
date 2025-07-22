@@ -8,7 +8,6 @@ services:
     environment:
       MYSQL_DATABASE: ecoride
       MYSQL_ROOT_PASSWORD: rootpass
-      # Créer un utilisateur standard
       MYSQL_USER: ecoride_user
       MYSQL_PASSWORD: ecoride_pass
     volumes:
@@ -43,10 +42,9 @@ services:
       DB_USERNAME: ecoride_user
       DB_PASSWORD: ecoride_pass
     volumes:
-      - ./src/:/var/www/html
+      - ./:/var/www/html
     ports:
       - "8080:80"
-    
     depends_on:
       - db
     networks:

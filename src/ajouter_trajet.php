@@ -9,7 +9,13 @@ if (!isset($_SESSION['id'])) {
 }
 
 $userId = $_SESSION['id'];
+
+$stmtVehicules = $pdo->prepare("SELECT * FROM vehicules WHERE utilisateur_id = :user_id");
+$stmtVehicules->execute([':user_id' => $userId]);
+$vehicules = $stmtVehicules->fetchAll(PDO::FETCH_ASSOC);
+
 $error = null;
+
 
 try {
     // Vérifier crédits de l'utilisateur
@@ -122,12 +128,15 @@ $vehicules = $stmtVehicules->fetchAll();
                 <option disabled>Aucun véhicule enregistré</option>
             <?php endif; ?>
         </select><br>
+<?php if (empty($vehicules)): ?>
+   <a href="ajouter_vehicule.php">
+       <button type="button">Ajouter un véhicule</button>
+   </a>
 
-        <?php if (empty($vehicules)): ?>
-            <p><a href="ajouter_vehicule.php">➕ Ajouter un véhicule</a></p>
-        <?php endif; ?>
+</form>
+<?php endif; ?>
 
-        <button type="submit" name="submit_trajet">Enregistrer le trajet</button>
+<button type="submit" name="submit_trajet">Enregistrer le trajet</button>
     </form>
 </body>
 </html>

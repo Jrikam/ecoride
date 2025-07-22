@@ -13,17 +13,16 @@ if (!isset($_SESSION['id'])) {
 $id = $_SESSION['id'];
 $covoiturage_id = $_POST['covoiturage_id'] ?? 0;
 
-// ✅ Vérifie que le trajet existe et est en cours (dans la bonne table)
+// Le chauffeur uniquement peut terminer son trajet
 $stmt = $pdo->prepare("SELECT * FROM trajets WHERE id = :id AND utilisateur_id = :user");
 $stmt->execute(['id' => $covoiturage_id, 'user' => $id]);
 $trajet = $stmt->fetch();
 
 if ($trajet && $trajet['etat'] === 'en_cours') {
-    // ✅ Mise à jour de l'état du trajet
     $pdo->prepare("UPDATE trajets SET etat = 'termine' WHERE id = :id")
         ->execute(['id' => $covoiturage_id]);
 
-    // ✅ Récupère les passagers (optionnel)
+    // Récupère les passagers pour notification fictive
     $stmtPassagers = $pdo->prepare("
         SELECT u.email 
         FROM participations p 
@@ -33,7 +32,7 @@ if ($trajet && $trajet['etat'] === 'en_cours') {
     $stmtPassagers->execute(['id' => $covoiturage_id]);
     $passagers = $stmtPassagers->fetchAll();
 
-    // ✅ Affiche confirmation + redirection
+    // Affichage confirmation
     ?>
     <!DOCTYPE html>
     <html lang="fr">
@@ -61,7 +60,7 @@ if ($trajet && $trajet['etat'] === 'en_cours') {
     exit;
 
 } else {
-    // ❌ Cas : trajet non trouvé ou déjà terminé
+    // Trajet introuvable ou déjà terminé
     ?>
     <!DOCTYPE html>
     <html lang="fr">

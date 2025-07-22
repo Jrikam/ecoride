@@ -24,10 +24,11 @@ if (!$covoiturage) {
 $stmtAvis = $pdo->prepare("
     SELECT a.note, a.commentaire, u.pseudo
     FROM avis a
-    JOIN utilisateurs u ON a.utilisateur_id = u.id
+    JOIN utilisateurs u ON a.conducteur_id = u.id
     WHERE a.covoiturage_id = :id
-      AND a.statut = 'validé'
+      AND a.statut = 'valid'
 ");
+
 $stmtAvis->execute([':id' => $id]);
 $avis = $stmtAvis->fetchAll();
 ?>

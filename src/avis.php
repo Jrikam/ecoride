@@ -6,7 +6,7 @@ $stmt = $pdo->query("
     SELECT a.note, a.commentaire, u.pseudo, a.date_avis
     FROM avis a
     JOIN utilisateurs u ON a.utilisateur_id = u.id
-    WHERE a.statut = 'valid'
+    WHERE a.statut IN ('valid', 'en attente')
     ORDER BY a.date_avis DESC
 ");
 $avisValidés = $stmt->fetchAll(PDO::FETCH_ASSOC);

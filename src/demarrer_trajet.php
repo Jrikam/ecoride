@@ -10,12 +10,11 @@ if (!isset($_SESSION['id'])) {
 $id = $_SESSION['id'];
 $covoiturage_id = $_POST['covoiturage_id'] ?? null;
 
-// Vérifie que l’ID est bien reçu
 if (!$covoiturage_id) {
     exit('Requête invalide : ID manquant');
 }
 
-// Utilise bien la table trajets ici (pas covoiturages)
+// Le chauffeur uniquement peut démarrer son trajet (on ne vérifie que l'id et le chauffeur)
 $stmt = $pdo->prepare("SELECT * FROM trajets WHERE id = :id AND utilisateur_id = :user");
 $stmt->execute([
     'id' => $covoiturage_id,
