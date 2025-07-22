@@ -37,7 +37,7 @@ services:
     container_name: ecoride_app
     restart: always
     environment:
-      DB_HOST: db
+      s c le MDB_HOST: db
       DB_DATABASE: ecoride
       DB_USERNAME: ecoride_user
       DB_PASSWORD: ecoride_pass
